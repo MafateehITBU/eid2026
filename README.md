@@ -1,1 +1,1 @@
-# eid2026
+# eid_greeting

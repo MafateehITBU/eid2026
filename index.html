@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eid Greeting Generator</title>
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- Include SweetAlert library -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2 id="titleText"></h2>
+        <div class="lang"><h2></h2></div>
+        <canvas id="greetingCanvas" width="400" height="600"></canvas>
+
+        <div class="form-group">
+            <input type="text" id="nameInput" placeholder="الاسم" oninput="generateCard()" />
+            <select title="company" id="company" onchange="changeTemplate()">
+                <option value="bemcoServices">شركة بمكو للخدمات</option>
+                <option value="arabianBemco">شركة بمكو العربية</option>
+            </select>
+            <button onclick="downloadCard()" class="download-btn">Download</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("greetingCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set high-resolution scaling
+        const scaleFactor = 2; // Adjust for higher quality
+        canvas.width = 400 * scaleFactor;
+        canvas.height = 600 * scaleFactor;
+        canvas.style.width = "400px";
+        canvas.style.height = "600px";
+        ctx.scale(scaleFactor, scaleFactor);
+
+        const COMPANY_CONFIG = {
+            bemcoServices: {
+                title: "يسر شركة بمكو للخدمات أن تهنئ موظفيها بقدوم عيد الفطر المبارك",
+                templateSrc: "./imgs/eid-card-en copy خدمات.jpg",
+            },
+            arabianBemco: {
+                title: "يسر شركة بمكو العربية أن تهنئ موظفيها بقدوم عيد الفطر المبارك",
+                templateSrc: "./imgs/eid-card-en copy عربية.jpg",
+            },
+        };
+
+        const template = new Image();
+        template.src = COMPANY_CONFIG.bemcoServices.templateSrc;
+
+        template.onload = function () {
+            generateCard();
+        };
+
+        function changeTemplate() {
+            const selectedCompany = document.getElementById("company").value;
+            const cfg = COMPANY_CONFIG[selectedCompany] ?? COMPANY_CONFIG.bemcoServices;
+            template.src = cfg.templateSrc;
+
+            template.onload = function () {
+                generateCard();
+            };
+        }
+
+        function roundedRectPath(ctx, x, y, w, h, r) {
+            const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.arcTo(x + w, y, x + w, y + h, radius);
+            ctx.arcTo(x + w, y + h, x, y + h, radius);
+            ctx.arcTo(x, y + h, x, y, radius);
+            ctx.arcTo(x, y, x + w, y, radius);
+            ctx.closePath();
+        }
+
+        function generateCard() {
+            const selectedCompany = document.getElementById("company").value;
+            const cfg = COMPANY_CONFIG[selectedCompany] ?? COMPANY_CONFIG.bemcoServices;
+            const titleEl = document.getElementById("titleText");
+            if (titleEl) titleEl.textContent = cfg.title;
+
+            const name = document.getElementById("nameInput").value.trim();
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(template, 0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+
+            if (name !== "") {
+                ctx.font = `${10 * scaleFactor}px Almarai`; // Scale font size
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                const x = canvas.width / (2 * scaleFactor);
+                const y = 515;
+                const paddingX = 14;
+                const paddingY = 10;
+                const textWidth = ctx.measureText(name).width;
+                const boxW = textWidth + paddingX * 2;
+                const boxH = 24 + paddingY;
+                const boxX = x - boxW / 2;
+                const boxY = y - boxH / 2;
+
+                ctx.save();
+                roundedRectPath(ctx, boxX, boxY, boxW, boxH, 12);
+                ctx.fillStyle = "#ffffff";
+                ctx.fill();
+                ctx.restore();
+
+                ctx.fillStyle = selectedCompany === "arabianBemco" ? "#3B82F6" : "#f44d00";
+                ctx.fillText(name, x, y);
+            }
+        }
+
+        function downloadCard() {
+            const name = document.getElementById("nameInput").value.trim();
+
+            if (name === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '!يرجى إدخال الاسم'
+                });
+                return;
+            }
+
+            const link = document.createElement("a");
+            link.download = "Eid-Greeting.png";
+            link.href = canvas.toDataURL("image/png", 1.0); // Highest quality
+            link.click();
+        }
+    </script>
+</body>
+
+</html>
